@@ -20,5 +20,7 @@ function Get-DbProviderFactory {
         throw (New-Object System.ArgumentException("Unable to find the requested .Net Framework Data Provider. Use 'Register-DbProvider' to register one."))
       }
     }
+  } else {
+    throw (New-Object System.ArgumentException("Unable to find the requested .Net Framework Data Provider. Use 'Register-DbProvider' to register one."))
   }
 }
