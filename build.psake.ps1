@@ -2,22 +2,38 @@ properties {
     $currentDir = resolve-path .
     $Invocation = (Get-Variable MyInvocation -Scope 1).Value
     $baseDir = $psake.build_script_dir
-    $version = git.exe describe --abbrev=0 --tags
-    $nugetExe = "$baseDir\vendor\tools\nuget"
+    $version = $env:APPVEYOR_BUILD_VERSION
+    $nugetExe = "${baseDir}\vendor\tools\nuget"
     $targetBase = "tools"
+    $NugetApiKey = $ENV:NugetApiKey
 }
 
 $ModuleName = "PSCommonSql"
 
-Task default -depends Test
+Task default -depends Test, Build
+Task Build -depends CopyLibraries
+Task Package -depends Version-Module, Pack-Nuget, Unversion-Module
+Task Release -depends Package, Push-Nuget
+Task PSGalleryRelease -depends Version-Module, DoPSGalleryRelease, Unversion-Module
 
-Task Test {
+Task Init {
+    $NugetPath = Split-Path $NugetEXE -parent
+    $env:path += ";$NugetPath"
+}
+
+Task Test -Depends Init,CopyLibraries {
     RequireModule "PSCommonSql.Sqlite"
     RequireModule "Pester"
     
     Push-Location $baseDir
-    Import-Module Pester
-    $PesterResult = Invoke-Pester -PassThru
+    Import-Module Pester -ErrorAction Stop
+    $PesterResult = Invoke-Pester -PassThru -OutputFormat NUnitXml -OutputFile $baseDir\PesterResult.xml
+    if($env:APPVEYOR -eq "True") {
+        $Address = "https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)"
+        $wc = New-Object System.Net.WebClient
+        $wc.UploadFile($Address, "$baseDir\PesterResult.xml")
+    }
+    
     if($PesterResult.FailedCount -gt 0) {
       throw "$($PesterResult.FailedCount) tests failed."
     }
@@ -39,12 +55,58 @@ Task CopyLibraries {
   copy "$baseDir\vendor\packages\System.Data.SQLite.Core.*\build\net40\*" "$baseDir\$ModuleName\bin" -Force -Recurse
 }
 
+Task Version-Module {
+    $v = git.exe describe --abbrev=0 --tags
+    $changeset=(git.exe log -1 $($v + '..') --pretty=format:%H)
+    (Get-Content "$baseDir\$ModuleName\$ModuleName.psm1") `
+      | % {$_ -replace "\`$version\`$", "$version" } `
+      | % {$_ -replace "\`$sha\`$", "$changeset" } `
+      | Set-Content "$baseDir\$ModuleName\$ModuleName.psm1"
+    Update-ModuleManifest -Path "$baseDir\$ModuleName\$ModuleName.psd1" -ModuleVersion $Version
+}
+
+Task Unversion-Module {
+    Set-Location $baseDir
+    git.exe checkout -- $baseDir\$ModuleName\$ModuleName.psm1
+    git.exe checkout -- $baseDir\$ModuleName\$ModuleName.psd1
+    Set-Location $currentDir
+}
+
+Task Pack-Nuget {
+    if (Test-Path "$baseDir\build") {
+      Remove-Item "$baseDir\build" -Recurse -Force
+    }
+
+    $null = mkdir "$baseDir\build"
+    exec {
+      . $nugetExe pack "$baseDir\$ModuleName.nuspec" -OutputDirectory "$baseDir\build" `
+      -NoPackageAnalysis -version $version -Properties targetBase=$targetBase
+    }
+}
+
+Task Push-Nuget {
+    $pkg = Get-Item -path $baseDir\build\$ModuleName.*.nupkg
+    exec { .$nugetExe push $pkg.FullName }
+}
+
+Task DoPSGalleryRelease -Depends Init {
+    if($ENV:APPVEYOR_REPO_BRANCH -ne "master") {
+        Write-Verbose "Skipping deployment for branch $ENV:APPVEYOR_REPO_BRANCH"
+    } else {
+      $PublishParams = @{
+          Path = Join-Path $baseDir "$ModuleName"
+          NuGetApiKey = $ENV:NugetApiKey
+      }
+
+      Publish-Module @PublishParams
+    }
+}
+
 function RequireModule {
   param($Name)
   if(-not (Get-Module -List -Name $Name )) {
-    Import-Module PowershellGet
+    Import-Module PowershellGet -ErrorAction Stop
     Find-Package -ForceBootstrap -Name zzzzzz -ErrorAction Ignore
-    Install-Module $Name -Scope CurrentUser
-    
-  }  
+    Install-Module $Name -Scope CurrentUser -Confirm:$false -Force
+  }
 }
