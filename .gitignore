@@ -1,0 +1,4 @@
+build/
+vendor/packages/
+PSCommonSql/bin/
+PesterResult.xml
