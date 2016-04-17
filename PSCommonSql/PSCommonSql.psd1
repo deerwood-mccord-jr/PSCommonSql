@@ -16,7 +16,7 @@ Author = 'gpduck'
 CompanyName = ''
 
 # Copyright statement for this module
-Copyright = '(c) 2015 Chris Duck. All rights reserved.'
+Copyright = '(c) 2016 Chris Duck. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Query SQL databases'
