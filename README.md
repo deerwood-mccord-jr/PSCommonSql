@@ -1,15 +1,14 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/7pm5cjeoqx09i3co/branch/master?svg=true)](https://ci.appveyor.com/project/RamblingCookieMonster/pssqlite)
 
-PSSQLite PowerShell Module
+PSCommonSql PowerShell Module
 =============
 
-This is a PowerShell module for working with SQLite.  It uses similar syntax to the [Invoke-Sqlcmd2](https://github.com/RamblingCookieMonster/PowerShell/blob/master/Invoke-Sqlcmd2.ps1) function from Chad Miller et al.
+This is a PowerShell module for working with SQL databases using the System.Data.Common abstraction layer.  It is forked from Warren Frame's SQLite fork of the  [Invoke-Sqlcmd2](https://github.com/RamblingCookieMonster/PowerShell/blob/master/Invoke-Sqlcmd2.ps1) function from Chad Miller et al.
 
 This covers limited functionality; contributions to this function or additional functions would be welcome!
 
 Caveats:
 * Minimal testing.
-* Today was my first time working with SQLite
 
 #Functionality
 
@@ -90,4 +89,4 @@ I'm planning to write about using SQL from a systems administrator or engineer s
 
 Check out Jim Christopher's [SQLite PowerShell Provider](https://psqlite.codeplex.com/).  It offers more functionality and flexibility than this repository.
 
-Credit to Chad Miller, Justin Dearing, Paul Bryson, Joel Bennett, and Dave Wyatt for the code carried over from Invoke-Sqlcmd2.
+Credit to Chad Miller, Justin Dearing, Paul Bryson, Joel Bennett, and Dave Wyatt for the code carried over from Invoke-Sqlcmd2 and Warren Frame for the SQLite port.
