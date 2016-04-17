@@ -161,7 +161,7 @@ function Invoke-SQLBulkCopy {
         [cmdletbinding()]
         param($conn, $com, $BoundParams)
         #Only dispose of the connection if we created it
-        if($BoundParams.Keys -notcontains 'SQLConnection')
+        if($BoundParams.Keys -notcontains 'SQLConnection' -and $conn)
         {
             $conn.Close()
             $conn.Dispose()
@@ -252,6 +252,7 @@ function Invoke-SQLBulkCopy {
         }
         Catch
         {
+            CleanUp -conn $SQLConnection -com $Command -BoundParams $PSBoundParameters
             Throw $_
         }
     
