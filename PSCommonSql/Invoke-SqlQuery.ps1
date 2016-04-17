@@ -181,11 +181,23 @@
                     ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false,
                     HelpMessage='Connection String required...' )]
+        [Parameter( ParameterSetName='Str-Fil',
+                    Position=0,
+                    Mandatory=$true,
+                    ValueFromPipeline=$true,
+                    ValueFromPipelineByPropertyName=$true,
+                    ValueFromRemainingArguments=$false,
+                    HelpMessage='Connection String required...' )]
         [ValidateNotNullOrEmpty()]
         [string[]]
         $ConnectionString,
                 
         [Parameter( ParameterSetName='Str-Que',
+                    Position=1,
+                    Mandatory=$false,
+                    ValueFromPipelineByPropertyName=$true,
+                    ValueFromRemainingArguments=$false )]
+        [Parameter( ParameterSetName='Str-Fil',
                     Position=1,
                     Mandatory=$false,
                     ValueFromPipelineByPropertyName=$true,
@@ -260,7 +272,7 @@
                     ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false )]
         [Alias( 'Connection', 'Conn' )]
-        [System.Data.Common.DbConnection]
+        [System.Data.Common.DbConnection[]]
         $SQLConnection
     ) 
 
@@ -344,24 +356,19 @@
     }
     Process
     {
-        foreach($String in $ConnectionString)
-        {
-            if($PSBoundParameters.Keys -contains "SQLConnection")
-            {
-                $Conn = $SQLConnection
+        if($PSBoundParameters.Keys -Contains "ConnectionString") {
+            $SQLConnection = $ConnectionString | ForEach-Object {
+                Write-Debug "Creating new connection to $_"
+                New-SqlConnection -ConnectionString $_ -DbProviderName $DbProviderName
             }
-            else
-            {
-                Write-Debug "ConnectionString $ConnectionString"
-                $conn = New-SqlConnection -ConnectionString $ConnectionString -DbProviderName $DbProviderName
-                #$conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
-
-                Try
-                {
-                    $conn.Open() 
-                }
-                Catch
-                {
+        }
+        
+        foreach($conn in $SQLConnection)
+        {
+            if($conn.State -ne "Open") {
+                try {
+                    $conn.Open()
+                } catch {
                     Write-Error $_
                     continue
                 }
@@ -394,6 +401,7 @@
     
             Try
             {
+                Write-Debug "Executing query $($cmd.CommandText) on $($conn.ConnectionString)"
                 [void]$da.fill($ds)
                 if($PSBoundParameters.Keys -notcontains "SQLConnection")
                 {
