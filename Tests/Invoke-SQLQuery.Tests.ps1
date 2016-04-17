@@ -11,8 +11,8 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 
 Describe "New-SQLConnection PS$PSVersion" {
     BeforeEach {
-        Import-Module $here\..\PSCommonSql -Force
-        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop
+        Import-Module $here\..\PSCommonSql -Force -ErrorAction Stop -Scope Global
+        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop -Scope Global 
     }
     
     AfterEach {
@@ -36,8 +36,8 @@ Describe "Invoke-SQLQuery PS$PSVersion" {
         $SQLiteFile = "$TestDrive\Working.SQLite"
         Copy-Item $here\Names.SQLite $SQLiteFile -Force
 
-        Import-Module $here\..\PSCommonSql -Force
-        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop
+        Import-Module $here\..\PSCommonSql -Force -Scope Global
+        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop -Scope Global
     }
     
     AfterEach {
@@ -113,8 +113,8 @@ Describe "Out-DataTable PS$PSVersion" {
         $SQLiteFile = "$TestDrive\Working.SQLite"
         Copy-Item $here\Names.SQLite $SQLiteFile -Force
 
-        Import-Module $here\..\PSCommonSql -Force
-        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop
+        Import-Module $here\..\PSCommonSql -Force -Scope Global
+        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop -Scope Global
     }
     
     AfterEach {
@@ -152,8 +152,8 @@ Describe "Invoke-SQLBulkCopy PS$PSVersion" {
         $SQLiteFile = "$TestDrive\Working.SQLite"
         Copy-Item $here\Names.SQLite $SQLiteFile -Force
 
-        Import-Module $here\..\PSCommonSql -Force
-        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop
+        Import-Module $here\..\PSCommonSql -Force -Scope Global
+        Import-Module PSCommonSql.Sqlite -Force -ErrorAction Stop -Scope Global
         
         $DataTable = 1..1000 | %{
             New-Object -TypeName PSObject -property @{
