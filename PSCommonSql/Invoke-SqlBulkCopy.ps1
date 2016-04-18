@@ -15,7 +15,7 @@ function Invoke-SQLBulkCopy {
     If specified, skip the confirm prompt
 
 .PARAMETER  NotifyAfter
-	The number of rows to fire the notification event after transferring.  0 means don't notify.  Notifications hit the verbose stream (use -verbose to see them)
+    The number of rows to fire the notification event after transferring.  0 means don't notify.  Notifications hit the verbose stream (use -verbose to see them)
 
 .PARAMETER QueryTimeout
     Specifies the number of seconds before the queries time out.
@@ -97,7 +97,7 @@ function Invoke-SQLBulkCopy {
                     ValueFromRemainingArguments=$false,
                     HelpMessage='Connection String required...' )]
         [ValidateNotNullOrEmpty()]
-				[string]
+        [string]
         $ConnectionString,
                 
         [Parameter( ParameterSetName='ConnectionString',
@@ -119,22 +119,22 @@ function Invoke-SQLBulkCopy {
         $SQLConnection,
 
         [parameter( ParameterSetName = 'Connection',
-										Position=2,
+                    Position=2,
                     Mandatory = $true)]
         [parameter( ParameterSetName = 'ConnectionString',
-										Position=3,
+                    Position=3,
                     Mandatory = $true)]
         [string]
         $Table,
 
         [Parameter(  ParameterSetName = 'Connection',
-										 Position=3,
+                     Position=3,
                      Mandatory=$false,
                      ValueFromPipeline=$false,
                      ValueFromPipelineByPropertyName=$false,
                      ValueFromRemainingArguments=$false)]
         [Parameter(  ParameterSetName = 'ConnectionString',
-										 Position=4,
+                     Position=4,
                      Mandatory=$false,
                      ValueFromPipeline=$false,
                      ValueFromPipelineByPropertyName=$false,
@@ -155,20 +155,6 @@ function Invoke-SQLBulkCopy {
     )
 
     Write-Verbose "Running Invoke-SQLBulkCopy with ParameterSet '$($PSCmdlet.ParameterSetName)'."
-
-    Function CleanUp
-    {
-        [cmdletbinding()]
-        param($conn, $com, $BoundParams)
-        #Only dispose of the connection if we created it
-        if($BoundParams.Keys -notcontains 'SQLConnection' -and $conn)
-        {
-            $conn.Close()
-            $conn.Dispose()
-            Write-Verbose "Closed connection"
-        }
-        $com.Dispose()
-    }
 
     function Get-ParameterName
     {
@@ -236,142 +222,152 @@ function Invoke-SQLBulkCopy {
     #Connections
         if($PSBoundParameters.Keys -notcontains "SQLConnection")
         {
-						$SQLConnection = New-SqlConnection -ConnectionString $ConnectionString -DbProviderName $DbProviderName
+            $SQLConnection = New-SqlConnection -ConnectionString $ConnectionString -DbProviderName $DbProviderName
         }
 
-        Write-Debug "ConnectionString $($SQLConnection.ConnectionString)"
-        Try
-        {
-            if($SQLConnection.State -notlike "Open")
-            {
-                $SQLConnection.Open()
-            }
-            $Command = $SQLConnection.CreateCommand()
-            $CommandTimeout = $QueryTimeout
-            $Transaction = $SQLConnection.BeginTransaction()
-        }
-        Catch
-        {
-            CleanUp -conn $SQLConnection -com $Command -BoundParams $PSBoundParameters
-            Throw $_
-        }
-    
-    Write-Debug "DATATABLE IS $($DataTable.gettype().fullname) with value $($Datatable | out-string)"
-    $RowCount = $Datatable.Rows.Count
-    Write-Verbose "Processing datatable with $RowCount rows"
+        try {
 
-    if ($Force -or $PSCmdlet.ShouldProcess("$($DataTable.Rows.Count) rows, with BoundParameters $($PSBoundParameters | Out-String)", "SQL Bulk Copy"))
-    {
-        #Get column info...
-            $Columns = $DataTable.Columns | Select -ExpandProperty ColumnName
-            $ColumnTypeHash = @{}
-            $ColumnToParamHash = @{}
-            $Index = 0
-            foreach($Col in $DataTable.Columns)
+            Write-Debug "ConnectionString $($SQLConnection.ConnectionString)"
+            Try
             {
-                $Type = Switch -regex ($Col.DataType.FullName)
+                if($SQLConnection.State -notlike "Open")
                 {
-                    # I figure we create a hashtable, can act upon expected data when doing insert
-                    # Might be a better way to handle this...
-                    '^(|\ASystem\.)Boolean$' {"BOOLEAN"} #I know they're fake...
-                    '^(|\ASystem\.)Byte\[\]' {"BLOB"}
-                    '^(|\ASystem\.)Byte$'  {"BLOB"}
-                    '^(|\ASystem\.)Datetime$'  {"DATETIME"}
-                    '^(|\ASystem\.)Decimal$' {"REAL"}
-                    '^(|\ASystem\.)Double$' {"REAL"}
-                    '^(|\ASystem\.)Guid$' {"TEXT"}
-                    '^(|\ASystem\.)Int16$'  {"INTEGER"}
-                    '^(|\ASystem\.)Int32$'  {"INTEGER"}
-                    '^(|\ASystem\.)Int64$' {"INTEGER"}
-                    '^(|\ASystem\.)UInt16$'  {"INTEGER"}
-                    '^(|\ASystem\.)UInt32$'  {"INTEGER"}
-                    '^(|\ASystem\.)UInt64$' {"INTEGER"}
-                    '^(|\ASystem\.)Single$' {"REAL"}
-                    '^(|\ASystem\.)String$' {"TEXT"}
-                    Default {"BLOB"} #Let SQLite handle the rest...
+                    $SQLConnection.Open()
+                }
+                $Command = $SQLConnection.CreateCommand()
+                $CommandTimeout = $QueryTimeout
+                $Transaction = $SQLConnection.BeginTransaction()
+            }
+            Catch
+            {
+                Throw $_
+            }
+        
+        Write-Debug "DATATABLE IS $($DataTable.gettype().fullname) with value $($Datatable | out-string)"
+        $RowCount = $Datatable.Rows.Count
+        Write-Verbose "Processing datatable with $RowCount rows"
+
+        if ($Force -or $PSCmdlet.ShouldProcess("$($DataTable.Rows.Count) rows, with BoundParameters $($PSBoundParameters | Out-String)", "SQL Bulk Copy"))
+        {
+            #Get column info...
+                $Columns = $DataTable.Columns | Select -ExpandProperty ColumnName
+                $ColumnTypeHash = @{}
+                $ColumnToParamHash = @{}
+                $Index = 0
+                foreach($Col in $DataTable.Columns)
+                {
+                    $Type = Switch -regex ($Col.DataType.FullName)
+                    {
+                        # I figure we create a hashtable, can act upon expected data when doing insert
+                        # Might be a better way to handle this...
+                        '^(|\ASystem\.)Boolean$' {"BOOLEAN"} #I know they're fake...
+                        '^(|\ASystem\.)Byte\[\]' {"BLOB"}
+                        '^(|\ASystem\.)Byte$'  {"BLOB"}
+                        '^(|\ASystem\.)Datetime$'  {"DATETIME"}
+                        '^(|\ASystem\.)Decimal$' {"REAL"}
+                        '^(|\ASystem\.)Double$' {"REAL"}
+                        '^(|\ASystem\.)Guid$' {"TEXT"}
+                        '^(|\ASystem\.)Int16$'  {"INTEGER"}
+                        '^(|\ASystem\.)Int32$'  {"INTEGER"}
+                        '^(|\ASystem\.)Int64$' {"INTEGER"}
+                        '^(|\ASystem\.)UInt16$'  {"INTEGER"}
+                        '^(|\ASystem\.)UInt32$'  {"INTEGER"}
+                        '^(|\ASystem\.)UInt64$' {"INTEGER"}
+                        '^(|\ASystem\.)Single$' {"REAL"}
+                        '^(|\ASystem\.)String$' {"TEXT"}
+                        Default {"BLOB"} #Let SQLite handle the rest...
+                    }
+
+                    #We ref columns by their index, so add that...
+                    $ColumnTypeHash.Add($Index,$Type)
+
+                    # Parameter names can only be alphanumeric: https://www.sqlite.org/c3ref/bind_blob.html
+                    # So we have to replace all non-alphanumeric chars in column name to use it as parameter later.
+                    # This builds hashtable to correlate column name with parameter name.
+                    $ColumnToParamHash.Add($Col.ColumnName, (Get-ParameterName $Col.ColumnName))
+
+                    $Index++
                 }
 
-                #We ref columns by their index, so add that...
-                $ColumnTypeHash.Add($Index,$Type)
-
-                # Parameter names can only be alphanumeric: https://www.sqlite.org/c3ref/bind_blob.html
-                # So we have to replace all non-alphanumeric chars in column name to use it as parameter later.
-                # This builds hashtable to correlate column name with parameter name.
-                $ColumnToParamHash.Add($Col.ColumnName, (Get-ParameterName $Col.ColumnName))
-
-                $Index++
-            }
-
-        #Build up the query
-            if ($PSBoundParameters.ContainsKey('ConflictClause'))
-            {
-                $Command.CommandText = New-SqlBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause
-            }
-            else
-            {
-                $Command.CommandText = New-SqlBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values
-            }
-
-            foreach ($Column in $Columns)
-            {
-								$param = $Command.CreateParameter()
-								$param.ParameterName = $ColumnToParamHash[$Column]
-                [void]$Command.Parameters.Add($param)
-            }
-            
-            for ($RowNumber = 0; $RowNumber -lt $RowCount; $RowNumber++)
-            {
-                $row = $Datatable.Rows[$RowNumber]
-                for($col = 0; $col -lt $Columns.count; $col++)
+            #Build up the query
+                if ($PSBoundParameters.ContainsKey('ConflictClause'))
                 {
-                    # Depending on the type of thid column, quote it
-                    # For dates, convert it to a string SQLite will recognize
-                    switch ($ColumnTypeHash[$col])
+                    $Command.CommandText = New-SqlBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause
+                }
+                else
+                {
+                    $Command.CommandText = New-SqlBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values
+                }
+
+                foreach ($Column in $Columns)
+                {
+                    $param = $Command.CreateParameter()
+                    $param.ParameterName = $ColumnToParamHash[$Column]
+                    [void]$Command.Parameters.Add($param)
+                }
+                
+                for ($RowNumber = 0; $RowNumber -lt $RowCount; $RowNumber++)
+                {
+                    $row = $Datatable.Rows[$RowNumber]
+                    for($col = 0; $col -lt $Columns.count; $col++)
                     {
-                        "BOOLEAN" {
-                            $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = [int][boolean]$row[$col]
-                        }
-                        "DATETIME" {
-                            Try
-                            {
-                                $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col].ToString("yyyy-MM-dd HH:mm:ss")
+                        # Depending on the type of thid column, quote it
+                        # For dates, convert it to a string SQLite will recognize
+                        switch ($ColumnTypeHash[$col])
+                        {
+                            "BOOLEAN" {
+                                $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = [int][boolean]$row[$col]
                             }
-                            Catch
-                            {
+                            "DATETIME" {
+                                Try
+                                {
+                                    $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col].ToString("yyyy-MM-dd HH:mm:ss")
+                                }
+                                Catch
+                                {
+                                    $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col]
+                                }
+                            }
+                            Default {
                                 $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col]
                             }
                         }
-                        Default {
-                            $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col]
+                    }
+
+                    #We have the query, execute!
+                        Try
+                        {
+                            [void]$Command.ExecuteNonQuery()
                         }
-                    }
-                }
+                        Catch
+                        {
+                            #Minimal testing for this rollback...
+                                Write-Verbose "Rolling back due to error:`n$_"
+                                $Transaction.Rollback()
+                            
+                            #Clean up and throw an error
+                                Throw "Rolled back due to error:`n$_"
+                         }
 
-                #We have the query, execute!
-                    Try
+                    if($NotifyAfter -gt 0 -and $($RowNumber % $NotifyAfter) -eq 0)
                     {
-                        [void]$Command.ExecuteNonQuery()
+                        Write-Verbose "Processed $($RowNumber + 1) records"
                     }
-                    Catch
-                    {
-                        #Minimal testing for this rollback...
-                            Write-Verbose "Rolling back due to error:`n$_"
-                            $Transaction.Rollback()
-                        
-                        #Clean up and throw an error
-                            CleanUp -conn $SQLConnection -com $Command -BoundParams $PSBoundParameters
-                            Throw "Rolled back due to error:`n$_"
-                    }
-
-                if($NotifyAfter -gt 0 -and $($RowNumber % $NotifyAfter) -eq 0)
-                {
-                    Write-Verbose "Processed $($RowNumber + 1) records"
-                }
-            }  
-    }
+                }  
+        }
+        
+        #Commit the transaction and clean up the connection
+            $Transaction.Commit()
     
-    #Commit the transaction and clean up the connection
-        $Transaction.Commit()
-        CleanUp -conn $SQLConnection -com $Command -BoundParams $PSBoundParameters
+    } finally {
+        #Only dispose of the connection if we created it
+        if($BoundParams.Keys -notcontains 'SQLConnection' -and $SQLConnection -and $SQLConnection.State -eq "Open")
+        {
+            $SQLConnection.Close()
+            $SQLConnection.Dispose()
+            Write-Verbose "Closed connection"
+        }
+        $Command.Dispose()
+    }
     
 }
