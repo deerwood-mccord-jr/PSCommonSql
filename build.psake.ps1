@@ -64,12 +64,14 @@ Task CopyLibraries {
 }
 
 Task Version-Module {
-    $v = git.exe describe --abbrev=0 --tags
-    $changeset=(git.exe log -1 $($v + '..') --pretty=format:%H)
-    (Get-Content "$baseDir\$ModuleName\$ModuleName.psm1") `
-      | % {$_ -replace "\`$version\`$", "$version" } `
-      | % {$_ -replace "\`$sha\`$", "$changeset" } `
-      | Set-Content "$baseDir\$ModuleName\$ModuleName.psm1"
+    $v = git.exe describe --abbrev=0 --tags 2>&1 > $null
+    if($v) {
+        $changeset=(git.exe log -1 $($v + '..') --pretty=format:%H)
+        (Get-Content "$baseDir\$ModuleName\$ModuleName.psm1") `
+        | % {$_ -replace "\`$version\`$", "$version" } `
+        | % {$_ -replace "\`$sha\`$", "$changeset" } `
+        | Set-Content "$baseDir\$ModuleName\$ModuleName.psm1"
+    }
     Update-ModuleManifest -Path "$baseDir\$ModuleName\$ModuleName.psd1" -ModuleVersion $Version
 }
 
