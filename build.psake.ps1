@@ -65,6 +65,7 @@ Task CopyLibraries {
 
 Task Version-Module {
     $v = git.exe describe --abbrev=0 --tags 2>&1 > $null
+    $LASTEXITCODE = 0
     if($v) {
         $changeset=(git.exe log -1 $($v + '..') --pretty=format:%H)
         (Get-Content "$baseDir\$ModuleName\$ModuleName.psm1") `
