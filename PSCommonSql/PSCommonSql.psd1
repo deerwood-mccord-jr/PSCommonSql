@@ -76,7 +76,15 @@ FunctionsToExport = 'Get-DbProviderFactory', 'Invoke-SQLBulkCopy', 'Invoke-SqlQu
 # FileList = @()
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess
-# PrivateData = ''
+PrivateData = @{
+	PSData = @{
+		Tags = @('powershell', 'sql')
+		
+		ProjectUri = "https://github.com/gpduck/PSCommonSql"
+		
+		LicenseUri = "https://raw.githubusercontent.com/gpduck/PSCommonSql/master/LICENSE"
+	}
+}
 
 # HelpInfo URI of this module
 # HelpInfoURI = ''
