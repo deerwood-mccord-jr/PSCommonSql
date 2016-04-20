@@ -26,4 +26,4 @@
     }
     
 #Create some aliases, export public functions
-    Export-ModuleMember -Function $($Public | Select -ExpandProperty BaseName)
+    Export-ModuleMember -Function $($Public | Select-Object -ExpandProperty BaseName)

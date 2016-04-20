@@ -57,6 +57,7 @@ function New-SqlConnection
     #>
     [cmdletbinding()]
     [OutputType([System.Data.Common.DbConnection])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions","")]
     param(
         [Parameter( Position=0,
                     Mandatory=$true,

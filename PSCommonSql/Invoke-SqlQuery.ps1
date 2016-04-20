@@ -382,7 +382,7 @@
             {
                 $SqlParameters.GetEnumerator() |
                     ForEach-Object {
-                        If ($_.Value -ne $null)
+                        If ($null -ne $_.Value)
                         {
                             if($_.Value -is [datetime]) { $_.Value = $_.Value.ToString("yyyy-MM-dd HH:mm:ss") }
                             $cmd.Parameters.AddWithValue("@$($_.Key)", $_.Value)
