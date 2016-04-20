@@ -58,7 +58,7 @@ PowerShellVersion = '2.0'
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = @('Get-DbProviderFactory', 'Invoke-SQLBulkCopy', 'Invoke-SqlQuery', 'New-SqlConnection', 'Out-DataTable', 'Register-DbProvider')
+FunctionsToExport = 'Get-DbProviderFactory', 'Invoke-SQLBulkCopy', 'Invoke-SqlQuery', 'New-SqlConnection', 'Out-DataTable', 'Register-DbProvider'
 
 # Cmdlets to export from this module
 # CmdletsToExport = '*'
