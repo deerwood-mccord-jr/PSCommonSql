@@ -25,6 +25,14 @@ Task Test -Depends Init,CopyLibraries {
     RequireModule "PSCommonSql.Sqlite"
     RequireModule "Pester"
     
+    if(Import-Module -Name PSScriptAnalyzer -PassThru -ErrorAction SilentlyContinue) {
+        $SAResult = @(Invoke-ScriptAnalyzer -Path "$baseDir\$ModuleName" -Recurse)
+        $SAResult
+        if($SAResult.Count -gt 0) {
+            throw "PSScriptAnalyzer reported $($SAResult.Count) issues."
+        }
+    }
+    
     Push-Location $baseDir
     Import-Module Pester -ErrorAction Stop
     $PesterResult = Invoke-Pester -PassThru -OutputFormat NUnitXml -OutputFile $baseDir\PesterResult.xml
@@ -105,6 +113,7 @@ Task DoPSGalleryRelease -Depends Init {
 function RequireModule {
   param($Name)
   if(-not (Get-Module -List -Name $Name )) {
+    Write-Host "Installing module $Name"
     Import-Module PowershellGet -ErrorAction Stop
     Find-Package -ForceBootstrap -Name zzzzzz -ErrorAction Ignore
     Install-Module $Name -Scope CurrentUser -Confirm:$false -Force
