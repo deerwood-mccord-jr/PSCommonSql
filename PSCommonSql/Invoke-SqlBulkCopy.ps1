@@ -362,13 +362,14 @@ function Invoke-SQLBulkCopy {
     
     } finally {
         #Only dispose of the connection if we created it
-        if($BoundParams.Keys -notcontains 'SQLConnection' -and $SQLConnection -and $SQLConnection.State -eq "Open")
+        if(!$PSBoundParameters.ContainsKey('SQLConnection') -and $SQLConnection -and $SQLConnection.State -eq "Open")
         {
             $SQLConnection.Close()
             $SQLConnection.Dispose()
             Write-Verbose "Closed connection"
         }
-        $Command.Dispose()
+		if($Command) {
+			$Command.Dispose()
+		}
     }
-    
 }
