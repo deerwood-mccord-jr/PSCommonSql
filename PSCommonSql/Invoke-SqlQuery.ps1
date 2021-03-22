@@ -395,7 +395,15 @@
             }
     
             $ds = New-Object system.Data.DataSet
-            $DbProviderFactory = [System.Data.Common.DbProviderFactories]::GetFactory($Conn)
+            
+            <#
+                System.Data.Common.DbProviderFactories fails to find OleDBFactory from the connection as passed. 
+                Doesn't take advantage of the More robust powershell function Get-DbProviderFactory
+            #>
+            # DCM REMOVED: $DbProviderFactory = [System.Data.Common.DbProviderFactories]::GetFactory($Conn) --THIS DOES NOT USE THE `Get-DbProviderFactory`
+
+            $DbProviderFactory = Get-DbProviderFactory -DbProviderName $conn.GetType().Namespace  ## Provider name is the namespace by convention, but some obscure providers might be different. 
+
             $da = $DbProviderFactory.CreateDataAdapter()
             $da.SelectCommand = $cmd
     
